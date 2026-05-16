@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1 - 10 algengustu orðin í íslenskum námsbókum</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            background-color: #f0f4f8; /* Mýkri bakgrunnur */
+            margin: 0;
+            padding: 2vh 5vw; /* Fyllir betur út í skjáinn */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container { 
+            width: 100%; 
+            max-width: 1400px; /* Leyfum þessu að verða risastórt á tölvuskjám */
+            background: white; 
+            padding: 40px 60px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+        }
+        h1 {
+            color: #1a73e8;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        #target { 
+            font-size: 3.5em; /* Mjög stór texti fyrir tölvuskjá */
+            margin: 30px 0; 
+            color: #222; 
+        }
+        .btn { 
+            padding: 15px 30px; 
+            font-size: 1.5em; 
+            margin: 10px; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 10px; 
+            background-color: #1a73e8; 
+            color: white; 
+            transition: 0.3s; 
+            font-weight: bold;
+        }
+        .btn:hover { background-color: #1557b0; transform: scale(1.05); }
+        .recording { background-color: #d93025; animation: pulse 1.5s infinite; }
+        .recording:hover { background-color: #b3140b; }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        #media-box { 
+            font-size: 1.4em; /* Stærri þýðingar */
+            color: #444; 
+            text-align: left; 
+            background: #f8fbff; 
+            padding: 25px 40px; 
+            border-radius: 12px; 
+            line-height: 2; 
+            border-left: 8px solid #1a73e8; 
+            margin-top: 30px;
+            display: inline-block;
+            min-width: 60%;
+        }
+        #spoken {
+            margin-top: 25px; 
+            font-size: 1.8em;
+            font-style: italic; 
+            color: #555;
+        }
+        #result {
+            font-weight: bold; 
+            font-size: 2.5em; 
+            margin-top: 15px; 
+            color: #1a73e8;
+        }
+        .nav-btns { margin-top: 40px; }
+        #counter { font-size: 1.5em; color: #666; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="app">
+    <h1>1 - 10 algengustu orðin í íslenskum námsbókum</h1>
+    
+    <div id="counter"></div>
+    
+    <div id="target"></div>
+    
+    <button id="record-btn" class="btn" onclick="toggleRecord()">🎤 Tala</button>
+    
+    <div id="spoken"></div>
+    <div id="result"></div>
+
+    <div id="media-box"></div>
+
+    <div class="nav-btns">
+        <button class="btn" style="background-color: #5f6368;" onclick="prevExercise()">⬅️ Fyrri</button>
+        <button class="btn" style="background-color: #5f6368;" onclick="nextExercise()">Næsta ➡️</button>
+    </div>
+</div>
+
+<script>
+const exerciseData = [
+    { 
+        text: "Þú talar <b>og</b> ég hlusta.", 
+        translations: "🇬🇧 You speak <b>and</b> I listen.<br>🇵🇱 Ty mówisz, <b>a</b> ja słucham.<br>🇪🇸 Tú hablas <b>y</b> yo escucho.<br>🇻🇳 Bạn nói <b>và</b> tôi nghe.<br>🇸🇦 أنت تتحدث <b>و</b>أنا أستمع.<br>🇷🇺 Ты говоришь, <b>а</b> я слушаю.<br>🇺🇦 Ти говориш, <b>а</b> я слухаю.<br>🇮🇷 تو حرف می‌زنی <b>و</b> من گوش می‌دهم." 
+    },
+    { 
+        text: "Gaman <b>að</b> sjá þig í skólanum.", 
+        translations: "🇬🇧 Good <b>to</b> see you at school.<br>🇵🇱 Miło cię <b>widzieć</b> w szkole.<br>🇪🇸 Qué bueno verte en la escuela.<br>🇻🇳 Rất vui được gặp bạn ở trường.<br>🇸🇦 من الجيد رؤيتك في المدرسة.<br>🇷🇺 Рад видеть тебя в школе.<br>🇺🇦 Радий бачити тебе в школі.<br>🇮🇷 از دیدنت در مدرسه خوشحالم." 
+    },
+    { 
+        text: "Þú ert nemandi <b>í</b> FB.", 
+        translations: "🇬🇧 You are a student <b>at</b> FB.<br>🇵🇱 Jesteś uczniem <b>w</b> FB.<br>🇪🇸 Eres estudiante <b>en</b> FB.<br>🇻🇳 Bạn là học sinh <b>tại</b> FB.<br>🇸🇦 أنت طالب <b>في</b> FB.<br>🇷🇺 Ты ученик <b>в</b> FB.<br>🇺🇦 Ти учень <b>у</b> FB.<br>🇮🇷 تو دانش‌آموز FB هستی." 
+    },
+    { 
+        text: "Við erum <b>á</b> bókasafninu.", 
+        translations: "🇬🇧 We are <b>in</b> the library.<br>🇵🇱 Jesteśmy <b>w</b> bibliotece.<br>🇪🇸 Estamos <b>en</b> la biblioteca.<br>🇻🇳 Chúng tôi đang <b>ở</b> thư viện.<br>🇸🇦 نحن <b>في</b> المكتبة.<br>🇷🇺 Мы <b>в</b> библиотеке.<br>🇺🇦 Ми <b>в</b> бібліотеці.<br>🇮🇷 ما <b>در</b> کتابخانه هستیم." 
+    },
+    { 
+        text: "Þetta <b>er</b> mjög góð bók.", 
+        translations: "🇬🇧 This <b>is</b> a very good book.<br>🇵🇱 To <b>jest</b> bardzo dobra książka.<br>🇪🇸 Este <b>es</b> un muy buen libro.<br>🇻🇳 Đây <b>là</b> một cuốn sách rất hay.<br>🇸🇦 هذا كتاب جيد جدا.<br>🇷🇺 Это очень хорошая книга.<br>🇺🇦 Це дуже гарна книга.<br>🇮🇷 این یک کتاب بسیار خوب <b>است</b>." 
+    },
+    { 
+        text: "Hér er textinn <b>sem</b> þú átt að lesa.", 
+        translations: "🇬🇧 Here is the text <b>that</b> you should read.<br>🇵🇱 Oto tekst, <b>który</b> powinieneś przeczytać.<br>🇪🇸 Aquí está el texto <b>que</b> debes leer.<br>🇻🇳 Đây là văn bản <b>mà</b> bạn nên đọc.<br>🇸🇦 هنا النص <b>الذي</b> يجب أن تقرأه.<br>🇷🇺 Вот текст, <b>который</b> ты должен прочитать.<br>🇺🇦 Ось текст, <b>який</b> ти повинен прочитати.<br>🇮🇷 این متنی است <b>که</b> باید بخوانی." 
+    },
+    { 
+        text: "Velkomin <b>til</b> okkar í tíma.", 
+        translations: "🇬🇧 Welcome <b>to</b> our class.<br>🇵🇱 Witamy <b>na</b> naszych zajęciach.<br>🇪🇸 Bienvenidos <b>a</b> nuestra clase.<br>🇻🇳 Chào mừng <b>đến</b> với lớp học của chúng tôi.<br>🇸🇦 مرحبا بكم <b>في</b> صفنا.<br>🇷🇺 Добро пожаловать <b>на</b> наш урок.<br>🇺🇦 Ласкаво просимо <b>на</b> наш урок.<br>🇮🇷 <b>به</b> کلاس ما خوش آمدید." 
+    },
+    { 
+        text: "<b>Við</b> lærum saman í dag.", 
+        translations: "🇬🇧 <b>We</b> study together today.<br>🇵🇱 <b>My</b> uczymy się dzisiaj razem.<br>🇪🇸 <b>Nosotros</b> estudiamos juntos hoy.<br>🇻🇳 <b>Chúng ta</b> học cùng nhau hôm nay.<br>🇸🇦 <b>نحن</b> ندرس معا اليوم.<br>🇷🇺 Сегодня <b>мы</b> учимся вместе.<br>🇺🇦 Сьогодні <b>ми</b> вчимося разом.<br>🇮🇷 <b>ما</b> امروز با هم درس می‌خوانیم." 
+    },
+    { 
+        text: "Við tölum <b>um</b> prófið.", 
+        translations: "🇬🇧 We talk <b>about</b> the test.<br>🇵🇱 Rozmawiamy <b>o</b> egzaminie.<br>🇪🇸 Hablamos <b>sobre</b> el examen.<br>🇻🇳 Chúng ta nói <b>về</b> bài kiểm tra.<br>🇸🇦 نحن نتحدث <b>عن</b> الاختبار.<br>🇷🇺 Мы говорим <b>о</b> тесте.<br>🇺🇦 Ми говоримо <b>про</b> тест.<br>🇮🇷 ما <b>درباره</b> امتحان صحبت می‌کنیم." 
+    },
+    { 
+        text: "<b>Það</b> gengur mjög vel hjá þér.", 
+        translations: "🇬🇧 <b>It</b> is going very well for you.<br>🇵🇱 <b>To</b> idzie ci bardzo dobrze.<br>🇪🇸 <b>Te</b> está yendo muy bien.<br>🇻🇳 Bạn đang làm rất tốt.<br>🇸🇦 <b>إنها</b> تسير بشكل جيد جدا بالنسبة لك.<br>🇷🇺 У тебя <b>это</b> идет очень хорошо.<br>🇺🇦 У тебе <b>це</b> йде дуже добре.<br>🇮🇷 <b>آن</b> برای تو خیلی خوب پیش می‌رود." 
+    }
+];
+
+let currentIndex = 0;
+let recognition;
+let isRecording = false;
+
+// Talgreining
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = 'is-IS';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+} else {
+    alert("Þessi vafri styður ekki talgreiningu. Notaðu Chrome eða Edge á tölvu.");
+}
+
+window.onload = () => { 
+    localStorage.clear(); 
+    updateUI(); 
+};
+
+function updateUI() {
+    if (currentIndex >= exerciseData.length) {
+        document.getElementById('app').innerHTML = `
+            <h1 style="color: #1a73e8; font-size: 3em;">Frábært! Þú hefur klárað allar setningarnar! 🎉</h1>
+            <p style="font-size: 1.5em; color: #555;">Smelltu á takkann hér að neðan til að sækja viðurkenningarskjalið þitt.</p>
+            <button class="btn" style="background-color: #34a853; font-size: 1.8em; padding: 20px 40px; margin-top: 30px;" onclick="downloadCert()">🏆 Sækja viðurkenningarskjal</button>
+            <br><br>
+            <button class="btn" style="background-color: #5f6368;" onclick="location.reload()">🔄 Byrja aftur</button>
+        `;
+        return;
+    }
+
+    const curr = exerciseData[currentIndex];
+    
+    document.getElementById('target').innerHTML = curr.text;
+    document.getElementById('counter').innerText = `Setning ${currentIndex + 1} af ${exerciseData.length}`;
+    document.getElementById('media-box').innerHTML = curr.translations;
+
+    const savedScore = localStorage.getItem('score_' + currentIndex);
+    const savedText = localStorage.getItem('text_' + currentIndex);
+
+    if (savedScore) {
+        document.getElementById('result').innerText = `Einkunn: ${savedScore}%`;
+        document.getElementById('spoken').innerText = `Þú sagðir: "${savedText}"`;
+    } else {
+        document.getElementById('result').innerText = "";
+        document.getElementById('spoken').innerText = "";
+    }
+}
+
+function nextExercise() {
+    currentIndex++;
+    updateUI();
+}
+
+function prevExercise() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        updateUI();
+    }
+}
+
+function toggleRecord() {
+    if (!recognition) return;
+
+    const btn = document.getElementById('record-btn');
+    if (isRecording) {
+        recognition.stop();
+        isRecording = false;
+        btn.innerText = "🎤 Tala";
+        btn.classList.remove('recording');
+    } else {
+        try {
+            recognition.start();
+            isRecording = true;
+            btn.innerText = "🛑 Stöðva";
+            btn.classList.add('recording');
+            document.getElementById('result').innerText = "Hlusta...";
+            document.getElementById('spoken').innerText = "";
+        } catch(e) {
+            console.log("Villa í upptöku: " + e);
+        }
+    }
+
+    recognition.onresult = (event) => {
+        let spoken = event.results[0][0].transcript;
+        
+        // Passa upp á stóran staf og punkt
+        spoken = spoken.trim();
+        if (spoken.length > 0) {
+            spoken = spoken.charAt(0).toUpperCase() + spoken.slice(1);
+            if (!spoken.match(/[.!?]$/)) {
+                spoken += ".";
+            }
+        }
+
+        document.getElementById('spoken').innerText = `Þú sagðir: "${spoken}"`;
+        
+        const cleanTargetText = exerciseData[currentIndex].text.replace(/<[^>]*>?/gm, '');
+        const score = compare(cleanTargetText, spoken);
+        
+        document.getElementById('result').innerText = `Einkunn: ${score}%`;
+
+        localStorage.setItem('score_' + currentIndex, score);
+        localStorage.setItem('text_' + currentIndex, spoken);
+
+        setTimeout(() => {
+            if (isRecording) toggleRecord();
+        }, 1000);
+    };
+}
+
+function compare(s1, s2) {
+    const clean = s => s.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"").trim();
+    const w1 = clean(s1).split(/\s+/); 
+    const w2 = clean(s2).split(/\s+/);
+    let m = 0; 
+    w1.forEach(w => { if(w2.includes(w)) m++; });
+    
+    let rawScore = Math.round((m / Math.max(w1.length, w2.length)) * 100) || 0;
+    const allowedValues = [0, 10, 30, 50, 70, 90, 100];
+    
+    return allowedValues.reduce((prev, curr) => {
+        return (Math.abs(curr - rawScore) < Math.abs(prev - rawScore) ? curr : prev);
+    });
+}
+
+// Býr til viðurkenningarskjal sem mynd og hleður niður
+function downloadCert() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1000;
+    canvas.height = 700;
+    const ctx = canvas.getContext('2d');
+    
+    // Hvítur bakgrunnur
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Fallegur blár rammi
+    ctx.strokeStyle = '#1a73e8';
+    ctx.lineWidth = 20;
+    ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
+
+    // Innri gulllitaður rammi
+    ctx.strokeStyle = '#fbbc05';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(55, 55, canvas.width - 110, canvas.height - 110);
+    
+    // Titill
+    ctx.fillStyle = '#1a73e8';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 70px Arial';
+    ctx.fillText('Viðurkenning', canvas.width / 2, 200);
+    
+    // Undirtitill
+    ctx.fillStyle = '#333333';
+    ctx.font = '30px Arial';
+    ctx.fillText('Þetta skjal staðfestir að þú hefur lokið æfingunni:', canvas.width / 2, 320);
+    
+    // Áfangi
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 40px Arial';
+    ctx.fillText('1 - 10 algengustu orðin í íslenskum námsbókum', canvas.width / 2, 400);
+    
+    // Hvatning texti
+    ctx.fillStyle = '#34a853';
+    ctx.font = 'italic 35px Arial';
+    ctx.fillText('Frábær árangur! Haltu áfram að æfa þig.', canvas.width / 2, 530);
+
+    // Dagsetning
+    const today = new Date();
+    const dateString = today.toLocaleDateString('is-IS');
+    ctx.fillStyle = '#666666';
+    ctx.font = '20px Arial';
+    ctx.fillText('Dagsetning: ' + dateString, canvas.width / 2, 620);
+    
+    // Hlaða niður
+    const link = document.createElement('a');
+    link.download = 'Vidurkenning_Islenska.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+}
+</script>
+
+</body>
+</html>
